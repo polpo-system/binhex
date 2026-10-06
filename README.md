@@ -23,4 +23,5 @@ made `sample.hqx` from `sample.bin`), `BinHexTest.Spoil` (a damaged copy, for th
 `BinHexTest.Compare`.
 
 Install with portia: `portia.Install binhex` (the console command), `portia.Install
-binhex-desktop` (the desktop command). The license is the one of ETH Oberon: `LICENSE`.
+binhex-desktop` (the desktop command). The license is GPL-3 (`LICENSE`); the code comes from ETH Oberon, whose license (`LICENSE.ETH`)
+asks to keep its copyright notice and conditions, which `LICENSE.ETH` does.
