@@ -1,5 +1,5 @@
 MODULE BinHexTest;  (** BinHexTest.Compare a b: the files are the same *)
-IMPORT Texts, Oberon, Files, out;
+IMPORT Texts := Texts0, Oberon := Oberon0, Files, out;  (* the console modules: for both packages *)
 
 PROCEDURE Compare*;
 VAR S: Texts.Scanner; a, b: ARRAY 64 OF CHAR; fa, fb: Files.File; ra, rb: Files.Rider; ca, cb: CHAR; n: LONGINT; same: BOOLEAN;
