@@ -3,14 +3,37 @@ Refer to the license.txt file provided with this distribution. *)
 
 MODULE BinHex0;	(** portable *) (* ejz,  *)
 (** BinHex decodeing, sit not yet supported *)
-(* polpo: DecodeText of BinHex, for the desktop (BinHex) and the console (binhex) *)
+(* polpo: DecodeText of BinHex, for the desktop (BinHex) and the console (binhex); the CRCs are
+   checked (they were not), error says why a decoding failed *)
 
-	IMPORT Files, Texts := Texts0;
+	IMPORT SYSTEM, Files, Texts := Texts0;
 
 	VAR
 		encTable: ARRAY 64 OF CHAR;
 		decTable: ARRAY 128 OF INTEGER;
 		length*: LONGINT;  (** the length of the data fork of the last DecodeText *)
+		error*: ARRAY 64 OF CHAR;  (** why the last DecodeText failed, "" if it did not *)
+
+	(* polpo: the CRC-16 (CCITT, polynomial 1021H) of the next n bytes of r and of the two bytes of
+	   the CRC that follow them: 0 when it is right *)
+	PROCEDURE CRC(VAR r: Files.Rider; n: LONGINT): LONGINT;
+		VAR crc: LONGINT; ch: CHAR; k: INTEGER;
+	BEGIN
+		crc := 0; INC(n, 2);
+		WHILE (n > 0) & ~r.eof DO
+			Files.Read(r, ch);
+			crc := SYSTEM.VAL(LONGINT, SYSTEM.VAL(SET, crc) / SYSTEM.VAL(SET, LONG(ORD(ch)) * 256));
+			k := 0;
+			WHILE k < 8 DO
+				crc := crc * 2;
+				IF crc >= 10000H THEN crc := SYSTEM.VAL(LONGINT, SYSTEM.VAL(SET, crc - 10000H) / SYSTEM.VAL(SET, LONG(1021H))) END;
+				INC(k)
+			END;
+			DEC(n)
+		END;
+		IF n > 0 THEN crc := -1 END;  (* the file ends too early *)
+		RETURN crc
+	END CRC;
 
 	PROCEDURE DecodeText*(T: Texts.Text; beg: LONGINT; F: Files.File): BOOLEAN;
 		VAR
@@ -18,18 +41,19 @@ MODULE BinHex0;	(** portable *) (* ejz,  *)
 			Rf, R: Files.Rider;
 			S: Texts.Scanner;
 			codes: ARRAY 4 OF INTEGER;
-			dlen: LONGINT;
+			dlen, rlen, hlen: LONGINT;
 			i: INTEGER;
 			ok, end: BOOLEAN;
 			ch, last: CHAR;
 	BEGIN
+		error := "";
 (* search BinHex *)
 		Texts.OpenScanner(S, T, beg); Texts.Scan(S);
 		WHILE ~S.eot & ~((S.class = Texts.Name) & (S.s = "BinHex")) DO
 			Texts.Scan(S)
 		END;
 		IF S.eot THEN
-			RETURN FALSE
+			error := "no BinHex text"; RETURN FALSE
 		END;
 		Texts.OpenReader(Rt, T, Texts.Pos(S)); Texts.Read(Rt, ch);
 		WHILE ~Rt.eot & (ch # ":") DO
@@ -72,7 +96,7 @@ MODULE BinHex0;	(** portable *) (* ejz,  *)
 			END
 		UNTIL Rt.eot OR end;
 		IF ~ok OR ~end THEN
-			RETURN FALSE
+			error := "bad or incomplete BinHex text"; RETURN FALSE
 		END;
 (* decode rle *)
 		Files.Set(R, Files.New(""), 0);
@@ -102,13 +126,24 @@ MODULE BinHex0;	(** portable *) (* ejz,  *)
 		Files.Read(Rf, ch); dlen := 256*dlen+ORD(ch);
 		Files.Read(Rf, ch); dlen := 256*dlen+ORD(ch);
 		Files.Read(Rf, ch); dlen := 256*dlen+ORD(ch);
-		Files.Set(Rf, Files.Base(R), 1+ORD(last)+1+4+4+2+4+4+2);
+		Files.Read(Rf, ch); rlen := ORD(ch);
+		Files.Read(Rf, ch); rlen := 256*rlen+ORD(ch);
+		Files.Read(Rf, ch); rlen := 256*rlen+ORD(ch);
+		Files.Read(Rf, ch); rlen := 256*rlen+ORD(ch);
+		(* polpo: the CRCs of the header, the data fork and the resource fork *)
+		hlen := 1+ORD(last)+1+4+4+2+4+4;
+		Files.Set(Rf, Files.Base(R), 0);
+		IF CRC(Rf, hlen) # 0 THEN error := "wrong CRC of the header"; RETURN FALSE END;
+		IF CRC(Rf, dlen) # 0 THEN error := "wrong CRC of the data"; RETURN FALSE END;
+		IF CRC(Rf, rlen) # 0 THEN error := "wrong CRC of the resources"; RETURN FALSE END;
+		Files.Set(Rf, Files.Base(R), hlen+2);
 		length := dlen;
 		Files.Set(R, F, 0); Files.Read(Rf, ch);
 		WHILE ~Rf.eof & (dlen > 0) DO
 			Files.Write(R, ch); Files.Read(Rf, ch); DEC(dlen)
 		END;
-		RETURN dlen = 0
+		IF dlen # 0 THEN error := "the data is incomplete"; RETURN FALSE END;
+		RETURN TRUE
 	END DecodeText;
 
 
@@ -155,7 +190,7 @@ MODULE BinHex0;	(** portable *) (* ejz,  *)
 	END InitTables;
 
 BEGIN
-	InitTables(); length := 0
+	InitTables(); length := 0; error := ""
 END BinHex0.
 
 System.Free BinHex BinHex0 ~

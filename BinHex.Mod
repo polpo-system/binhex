@@ -40,7 +40,7 @@ MODULE BinHex;	(** portable *) (* ejz,  *)
 				Files.Register(F);
 				Texts.Write(W, " "); Texts.WriteInt(W, BinHex0.length, 0); Texts.WriteString(W, " done")
 			ELSE
-				Texts.WriteString(W, " failed")
+				Texts.WriteString(W, " failed: "); Texts.WriteString(W, BinHex0.error)
 			END;
 			Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf)
 		END

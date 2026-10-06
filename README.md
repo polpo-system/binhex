@@ -14,11 +14,13 @@ In the console: `binhex.Decode file name.hqx` (the result on the standard output
     binhex.Mod    the console command
     BinHex.Mod    the desktop command (results in the log)
 
-StuffIt archives (.sit) inside are not unpacked; the CRCs of the file are not checked.
+StuffIt archives (.sit) inside are not unpacked. The CRCs of the header, the data and the
+resources are checked (Native Oberon did not); BinHex0.error says why a decoding failed.
 
-From ETH Oberon (OLR), converted to plain text; the decoding moved to BinHex0. `test/`: `mkhqx.py`, a BinHex 4.0 encoder that
-made `sample.hqx` from `sample.bin`, and `BinHexTest.Compare a b`, the test of the package
-(needs the desktop).
+From ETH Oberon (OLR), converted to plain text; the decoding moved to BinHex0. `test/`:
+`BinHexTest.Mod`, the tests in the console: `BinHexTest.Encode` (a BinHex 4.0 encoder, which
+made `sample.hqx` from `sample.bin`), `BinHexTest.Spoil` (a damaged copy, for the CRC) and
+`BinHexTest.Compare`.
 
 Install with portia: `portia.Install binhex` (the console command), `portia.Install
 binhex-desktop` (the desktop command). The license is the one of ETH Oberon: `LICENSE`.

@@ -14,7 +14,7 @@ BEGIN
   NEW(T); Texts.Open(T, src); F := Files.New(name);
   IF BinHex0.DecodeText(T, 0, F) THEN
     Files.Register(F); out.String("binhex: "); out.String(name); out.String(", "); out.Int(BinHex0.length, 0); out.String(" bytes")
-  ELSE out.String("binhex: "); out.String(src); out.String(" is not BinHex 4.0 text, or incomplete")
+  ELSE out.String("binhex: "); out.String(src); out.String(": "); out.String(BinHex0.error)
   END;
   out.Ln
 END Decode;
