@@ -4,13 +4,13 @@ MODULE BinHexTest;  (** the tests of binhex, in the console *)
    BinHexTest.Spoil a b pos             b is a with the character at pos changed
    BinHexTest.Compare a b               are the files a and b the same *)
 
-IMPORT SYSTEM, Files, texts, out;
+IMPORT SYSTEM, Files, Texts, Out;
 
 VAR alphabet: ARRAY 65 OF CHAR;  (* the 64 characters of BinHex 4.0 *)
 
 PROCEDURE Args(VAR a, b: ARRAY OF CHAR): BOOLEAN;
-VAR A: texts.Reader;
-BEGIN texts.OpenArgs(A); RETURN texts.Arg(A, a) & texts.Arg(A, b)
+VAR A: Texts.Reader;
+BEGIN Texts.OpenArgs(A); RETURN Texts.Arg(A, a) & Texts.Arg(A, b)
 END Args;
 
 (* the CRC-16 of BinHex (CCITT, polynomial 1021H) after the byte ch *)
@@ -57,8 +57,8 @@ VAR in, name: ARRAY 64 OF CHAR; f, b, h: Files.File; r, w: Files.Rider; ch, last
   END Str;
 
 BEGIN
-  IF ~Args(in, name) THEN out.String("usage: BinHexTest.Encode file name.hqx"); out.Ln; RETURN END;
-  f := Files.Old(in); IF f = NIL THEN out.String("BinHexTest: no "); out.String(in); out.Ln; RETURN END;
+  IF ~Args(in, name) THEN Out.String("usage: BinHexTest.Encode file name.hqx"); Out.Ln; RETURN END;
+  f := Files.Old(in); IF f = NIL THEN Out.String("BinHexTest: no "); Out.String(in); Out.Ln; RETURN END;
   len := Files.Length(f);
   (* the body: header, data fork, resource fork (empty), each with its CRC *)
   b := Files.New(""); Files.Set(w, b, 0); crc := 0;
@@ -82,14 +82,14 @@ BEGIN
   END;
   IF nb > 0 THEN Files.Write(w, alphabet[bits * ASH(1, 6 - nb) MOD 64]) END;
   Files.Write(w, ":"); Files.Write(w, 0AX); Files.Register(h);
-  out.String("BinHexTest: "); out.String(name); out.String(" from "); out.Int(len, 0); out.String(" bytes"); out.Ln
+  Out.String("BinHexTest: "); Out.String(name); Out.String(" from "); Out.Int(len, 0); Out.String(" bytes"); Out.Ln
 END Encode;
 
 PROCEDURE Spoil*;
-VAR a, b: ARRAY 64 OF CHAR; A: texts.Reader; p: ARRAY 16 OF CHAR; pos, i: LONGINT; fa, fb: Files.File; ra, rb: Files.Rider; ch: CHAR;
+VAR a, b: ARRAY 64 OF CHAR; A: Texts.Reader; p: ARRAY 16 OF CHAR; pos, i: LONGINT; fa, fb: Files.File; ra, rb: Files.Rider; ch: CHAR;
 BEGIN
-  texts.OpenArgs(A);
-  IF ~texts.Arg(A, a) OR ~texts.Arg(A, b) OR ~texts.Arg(A, p) THEN out.String("usage: BinHexTest.Spoil a b pos"); out.Ln; RETURN END;
+  Texts.OpenArgs(A);
+  IF ~Texts.Arg(A, a) OR ~Texts.Arg(A, b) OR ~Texts.Arg(A, p) THEN Out.String("usage: BinHexTest.Spoil a b pos"); Out.Ln; RETURN END;
   pos := 0; i := 0; WHILE p[i] # 0X DO pos := pos * 10 + ORD(p[i]) - ORD("0"); INC(i) END;
   fa := Files.Old(a); fb := Files.New(b); Files.Set(ra, fa, 0); Files.Set(rb, fb, 0); i := 0;
   Files.Read(ra, ch);
@@ -97,19 +97,19 @@ BEGIN
     IF i = pos THEN IF ch = "A" THEN ch := "B" ELSE ch := "A" END END;  (* another character of the alphabet *)
     Files.Write(rb, ch); Files.Read(ra, ch); INC(i)
   END;
-  Files.Register(fb); out.String("BinHexTest: "); out.String(b); out.String(" spoiled at "); out.Int(pos, 0); out.Ln
+  Files.Register(fb); Out.String("BinHexTest: "); Out.String(b); Out.String(" spoiled at "); Out.Int(pos, 0); Out.Ln
 END Spoil;
 
 PROCEDURE Compare*;
 VAR a, b: ARRAY 64 OF CHAR; fa, fb: Files.File; ra, rb: Files.Rider; ca, cb: CHAR; n: LONGINT; same: BOOLEAN;
 BEGIN
-  IF ~Args(a, b) THEN out.String("usage: BinHexTest.Compare a b"); out.Ln; RETURN END;
+  IF ~Args(a, b) THEN Out.String("usage: BinHexTest.Compare a b"); Out.Ln; RETURN END;
   fa := Files.Old(a); fb := Files.Old(b);
-  IF (fa = NIL) OR (fb = NIL) THEN out.String("BinHexTest: missing file"); out.Ln; RETURN END;
+  IF (fa = NIL) OR (fb = NIL) THEN Out.String("BinHexTest: missing file"); Out.Ln; RETURN END;
   same := Files.Length(fa) = Files.Length(fb); Files.Set(ra, fa, 0); Files.Set(rb, fb, 0); n := 0;
   WHILE same & (n < Files.Length(fa)) DO Files.Read(ra, ca); Files.Read(rb, cb); same := ca = cb; INC(n) END;
-  out.String("BinHexTest: "); out.Int(Files.Length(fa), 0); out.String(" bytes, ");
-  IF same THEN out.String("same") ELSE out.String("different") END; out.Ln
+  Out.String("BinHexTest: "); Out.Int(Files.Length(fa), 0); Out.String(" bytes, ");
+  IF same THEN Out.String("same") ELSE Out.String("different") END; Out.Ln
 END Compare;
 
 PROCEDURE Init;
